@@ -111,7 +111,7 @@ app.controller("rentasCtrl", function ($scope, $http) {
     $(document).on("submit", "#frmRenta", function (event) {
         event.preventDefault()
 
-        $.post("/rentas", {
+        $.post("/renta", {
             id: "",
             cliente: $("#txtIdCliente").val(),
             traje: $("#txtIdTraje").val(),
@@ -189,3 +189,4 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     activeMenuOption(location.hash)
 })
+
