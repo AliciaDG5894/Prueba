@@ -19,28 +19,32 @@ from flask_cors import CORS, cross_origin
 
 con = mysql.connector.connect(
     host="185.232.14.52",
-    database="u760464709_16005339_bd",
-    user="u760464709_16005339_usr",
-    password="/iJRzrJBz+P1"
+    database="u760464709_23005256_bd",
+    user="u760464709_23005256_usr",
+    password="~6ru!MMJZzX"
 )
 
 app = Flask(__name__)
 CORS(app)
 
-def pusherProductos():
+
+# PUSHER/ listo
+
+def pusherRentas():
     import pusher
     
     pusher_client = pusher.Pusher(
-      app_id="2046005",
-      key="e57a8ad0a9dc2e83d9a2",
-      secret="8a116dd9600a3b04a3a0",
-      cluster="us2",
-      ssl=True
+    app_id="2046017",
+    key="b51b00ad61c8006b2e6f",
+    secret="d2ec35aa5498a18af7bf",
+    cluster="us2",
+    ssl=True
     )
     
-    pusher_client.trigger("canalProductos", "eventoProductos", {"message": "Hola Mundo!"})
+    pusher_client.trigger("canalRentas", "eventoRentas", {"message": "Hola Mundo!"})
     return make_response(jsonify({}))
 
+# RUTA
 @app.route("/")
 def index():
     if not con.is_connected():
@@ -50,6 +54,7 @@ def index():
 
     return render_template("index.html")
 
+# LOGIN
 @app.route("/app")
 def app2():
     if not con.is_connected():
@@ -59,6 +64,10 @@ def app2():
 
     return render_template("login.html")
     # return "<h5>Hola, soy la view app</h5>"
+
+
+
+# CREAR TABLA DE USUARIO/ listo
 
 @app.route("/iniciarSesion", methods=["POST"])
 # Usar cuando solo se quiera usar CORS en rutas específicas
@@ -86,65 +95,77 @@ def iniciarSesion():
 
     return make_response(jsonify(registros))
 
-@app.route("/productos")
-def productos():
-    return render_template("productos.html")
 
-@app.route("/tbodyProductos")
-def tbodyProductos():
+
+@app.route("/rentas")
+def rentas():
+    return render_template("rentas.html")
+
+@app.route("/tbodyRentas")
+def tbodyRentas():
     if not con.is_connected():
         con.reconnect()
 
     cursor = con.cursor(dictionary=True)
     sql    = """
-    SELECT Id_Producto,
-           Nombre_Producto,
-           Precio,
-           Existencias
+    SELECT idRenta,
+           idCliente,
+           idTraje,
+           descripcion,
+           fechaHoraInicio,
+           fechaHoraFin
 
-    FROM productos
+    FROM rentas
 
     ORDER BY Id_Producto DESC
 
     LIMIT 10 OFFSET 0
     """
 
+# REVISAR FECHA/ listo
     cursor.execute(sql)
     registros = cursor.fetchall()
 
     # Si manejas fechas y horas
-    """
+    
     for registro in registros:
-        fecha_hora = registro["Fecha_Hora"]
+        inicio = registro["fechaHoraInicio"]
+        fin = registro["fechaHoraFin"]
 
-        registro["Fecha_Hora"] = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
-        registro["Fecha"]      = fecha_hora.strftime("%d/%m/%Y")
-        registro["Hora"]       = fecha_hora.strftime("%H:%M:%S")
-    """
+        registro["fechaInicioFormato"] = inicio.strftime("%d/%m/%Y")
+        registro["horaInicioFormato"]  = inicio.strftime("%H:%M:%S")
 
-    return render_template("tbodyProductos.html", productos=registros)
+        registro["fechaFinFormato"] = fin.strftime("%d/%m/%Y")
+        registro["horaFinFormato"]  = fin.strftime("%H:%M:%S")
+    
+# Y CAMBIE PRODUCTOS=REGIStros / listo
+    return render_template("tbodyRentas.html", rentas=registros)
 
-@app.route("/productos/ingredientes/<int:id>")
-def productosIngredientes(id):
-    if not con.is_connected():
-        con.reconnect()
+# MODAL
 
-    cursor = con.cursor(dictionary=True)
-    sql    = """
-    SELECT productos.Nombre_Producto, ingredientes.*, productos_ingredientes.Cantidad FROM productos_ingredientes
-    INNER JOIN productos ON productos.Id_Producto = productos_ingredientes.Id_Producto
-    INNER JOIN ingredientes ON ingredientes.Id_Ingrediente = productos_ingredientes.Id_Ingrediente
-    WHERE productos_ingredientes.Id_Producto = %s
-    ORDER BY productos.Nombre_Producto
-    """
+# @app.route("/productos/ingredientes/<int:id>")
+# def productosIngredientes(id):
+#     if not con.is_connected():
+#         con.reconnect()
 
-    cursor.execute(sql, (id, ))
-    registros = cursor.fetchall()
+#     cursor = con.cursor(dictionary=True)
+#     sql    = """
+#     SELECT productos.Nombre_Producto, ingredientes.*, productos_ingredientes.Cantidad FROM productos_ingredientes
+#     INNER JOIN productos ON productos.Id_Producto = productos_ingredientes.Id_Producto
+#     INNER JOIN ingredientes ON ingredientes.Id_Ingrediente = productos_ingredientes.Id_Ingrediente
+#     WHERE productos_ingredientes.Id_Producto = %s
+#     ORDER BY productos.Nombre_Producto
+#     """
 
-    return render_template("modal.html", productosIngredientes=registros)
+#     cursor.execute(sql, (id, ))
+#     registros = cursor.fetchall()
 
-@app.route("/productos/buscar", methods=["GET"])
-def buscarProductos():
+#     return render_template("modal.html", productosIngredientes=registros)
+
+
+# BUSQUEDA
+@app.route("/rentas/buscar", methods=["GET"])
+def buscarRentas():
     if not con.is_connected():
         con.reconnect()
 
@@ -152,38 +173,48 @@ def buscarProductos():
     busqueda = args["busqueda"]
     busqueda = f"%{busqueda}%"
     
+# EN WHERE BUSQUEDA PUSE SOLO TRES POR EL "VAL" NO SE SI SE LIMITE (si se limita)
     cursor = con.cursor(dictionary=True)
     sql    = """
-    SELECT Id_Producto,
-           Nombre_Producto,
-           Precio,
-           Existencias
+    SELECT idRenta,
+           idCliente,
+           idTraje,
+           descripcion,
+           fechaHoraInicio,
+           fechaHoraFin
 
-    FROM productos
+    FROM rentas
 
-    WHERE Nombre_Producto LIKE %s
-    OR    Precio          LIKE %s
-    OR    Existencias     LIKE %s
+    WHERE idCliente LIKE %s
+    OR    idTraje          LIKE %s
+    OR    descripcion      LIKE %s
+    OR    fechaHoraInicio  LIKE %s
+    OR    fechaHoraFin     LIKE %s
 
-    ORDER BY Id_Producto DESC
+    ORDER BY idRenta DESC
 
     LIMIT 10 OFFSET 0
     """
-    val    = (busqueda, busqueda, busqueda)
+    val    = (busqueda, busqueda, busqueda, busqueda, busqueda)
+
+# CHECAR FECHA/ listo
 
     try:
         cursor.execute(sql, val)
         registros = cursor.fetchall()
 
-        # Si manejas fechas y horas
-        """
-        for registro in registros:
-            fecha_hora = registro["Fecha_Hora"]
+        # Si manejas fechas y horas(comentario de profe)
 
-            registro["Fecha_Hora"] = fecha_hora.strftime("%Y-%m-%d %H:%M:%S")
-            registro["Fecha"]      = fecha_hora.strftime("%d/%m/%Y")
-            registro["Hora"]       = fecha_hora.strftime("%H:%M:%S")
-        """
+        for registro in registros:
+            inicio = registro["fechaHoraInicio"]
+            fin = registro["fechaHoraFin"]
+
+            registro["fechaInicioFormato"] = inicio.strftime("%d/%m/%Y")
+            registro["horaInicioFormato"]  = inicio.strftime("%H:%M:%S")
+
+            registro["fechaFinFormato"] = fin.strftime("%d/%m/%Y")
+            registro["horaFinFormato"]  = fin.strftime("%H:%M:%S")
+        
 
     except mysql.connector.errors.ProgrammingError as error:
         print(f"Ocurrió un error de programación en MySQL: {error}")
@@ -194,84 +225,97 @@ def buscarProductos():
 
     return make_response(jsonify(registros))
 
-@app.route("/producto", methods=["POST"])
+
+# GUARDAR
+
+@app.route("/rentas", methods=["POST"])
 # Usar cuando solo se quiera usar CORS en rutas específicas
 # @cross_origin()
-def guardarProducto():
+def guardarRenta():
     if not con.is_connected():
         con.reconnect()
 
-    id          = request.form["id"]
-    nombre      = request.form["nombre"]
-    precio      = request.form["precio"]
-    existencias = request.form["existencias"]
+    id               = request.form["id"]
+    cliente          = request.form["cliente"]
+    traje            = request.form["traje"]
+    descripcion      = request.form["descripcion"]
+    fechahorainicio  = datetime.datetime.now(pytz.timezone("America/Matamoros"))
+    fechahorafin     = datetime.datetime.now(pytz.timezone("America/Matamoros"))
     # fechahora   = datetime.datetime.now(pytz.timezone("America/Matamoros"))
     
     cursor = con.cursor()
 
     if id:
         sql = """
-        UPDATE productos
+        UPDATE rentas
 
-        SET Nombre_Producto = %s,
-            Precio          = %s,
-            Existencias     = %s
+        SET idCliente       = %s,
+            idTraje         = %s,
+            descripcion     = %s,
+            fechaHoraInicio = %s,
+            fechaHoraFin
 
-        WHERE Id_Producto = %s
+        WHERE idRenta = %s
         """
-        val = (nombre, precio, existencias, id)
+        val = (cliente, traje, descripcion, fechahorainicio, fechahorafin, id)
     else:
+        # FALTA CAMBIAR/ listo
         sql = """
-        INSERT INTO productos (Nombre_Producto, Precio, Existencias)
-                    VALUES    (%s,          %s,      %s)
+        INSERT INTO rentas (idCliente, idTraje, descripcion, fechaHoraInicio, fechaHoraFin)
+                    VALUES (   %s,        %s,        %s,            %s,            %s)
         """
-        val =                 (nombre, precio, existencias)
+        val =                 (cliente, traje, descripcion, fechahorainicio, fechahorafin)
     
     cursor.execute(sql, val)
     con.commit()
     con.close()
 
-    pusherProductos()
+# CAMBIAR PUSHERRRRRR
+    pusherRentas()
     
     return make_response(jsonify({}))
 
-@app.route("/producto/<int:id>")
-def editarProducto(id):
-    if not con.is_connected():
-        con.reconnect()
 
-    cursor = con.cursor(dictionary=True)
-    sql    = """
-    SELECT Id_Producto, Nombre_Producto, Precio, Existencias
+# EDITAR
+# @app.route("/producto/<int:id>")
+# def editarProducto(id):
+#     if not con.is_connected():
+#         con.reconnect()
 
-    FROM productos
+#     cursor = con.cursor(dictionary=True)
+#     sql    = """
+#     SELECT Id_Producto, Nombre_Producto, Precio, Existencias
 
-    WHERE Id_Producto = %s
-    """
-    val    = (id,)
+#     FROM productos
 
-    cursor.execute(sql, val)
-    registros = cursor.fetchall()
-    con.close()
+#     WHERE Id_Producto = %s
+#     """
+#     val    = (id,)
 
-    return make_response(jsonify(registros))
+#     cursor.execute(sql, val)
+#     registros = cursor.fetchall()
+#     con.close()
 
-@app.route("/producto/eliminar", methods=["POST"])
-def eliminarProducto():
-    if not con.is_connected():
-        con.reconnect()
+#     return make_response(jsonify(registros))
 
-    id = request.form["id"]
 
-    cursor = con.cursor(dictionary=True)
-    sql    = """
-    DELETE FROM productos
-    WHERE Id_Producto = %s
-    """
-    val    = (id,)
+# ELIMINAR
+# @app.route("/producto/eliminar", methods=["POST"])
+# def eliminarProducto():
+#     if not con.is_connected():
+#         con.reconnect()
 
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
+#     id = request.form["id"]
 
-    return make_response(jsonify({}))
+#     cursor = con.cursor(dictionary=True)
+#     sql    = """
+#     DELETE FROM productos
+#     WHERE Id_Producto = %s
+#     """
+#     val    = (id,)
+
+#     cursor.execute(sql, val)
+#     con.commit()
+#     con.close()
+
+#     return make_response(jsonify({}))
