@@ -117,7 +117,7 @@ def tbodyRentas():
 
     FROM rentas
 
-    ORDER BY Id_Producto DESC
+    ORDER BY idRenta DESC
 
     LIMIT 10 OFFSET 0
     """
@@ -319,4 +319,5 @@ def guardarRenta():
 #     con.close()
 
 #     return make_response(jsonify({}))
+
 
