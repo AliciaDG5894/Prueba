@@ -228,7 +228,7 @@ def buscarRentas():
 
 # GUARDAR
 
-@app.route("/rentas", methods=["POST"])
+@app.route("/renta", methods=["POST"])
 # Usar cuando solo se quiera usar CORS en rutas específicas
 # @cross_origin()
 def guardarRenta():
@@ -319,3 +319,4 @@ def guardarRenta():
 #     con.close()
 
 #     return make_response(jsonify({}))
+
